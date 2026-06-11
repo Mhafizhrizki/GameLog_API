@@ -16,6 +16,7 @@ return new class extends Migration
             // Kolom sesuai instruksi Github
             $table->unsignedBigInteger('rawg_id');
             $table->string('title');
+            $table->string('image')->nullable();
             $table->string('status')->default('playing'); // wishlist, playing, completed
             $table->integer('personal_rating')->default(0); // 0 sampai 5
 

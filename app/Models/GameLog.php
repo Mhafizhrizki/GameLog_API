@@ -13,6 +13,7 @@ class GameLog extends Model
         'user_id',
         'rawg_id',
         'title',
+        'image',
         'status',
         'personal_rating'
     ];
