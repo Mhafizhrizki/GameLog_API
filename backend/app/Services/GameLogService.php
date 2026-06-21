@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Collection;
 class GameLogService implements GameLogServiceInterface
 {
     public function __construct(
-        private readonly GameLogRepositoryInterface $gameLogRepository
+        private GameLogRepositoryInterface $gameLogRepository
     ) {}
 
     /**
