@@ -2,10 +2,16 @@
 
 namespace App\Providers;
 
+use App\Contracts\AuthServiceInterface;
 use App\Contracts\GameLogRepositoryInterface;
+use App\Contracts\GameLogServiceInterface;
 use App\Contracts\UserStatisticsRepositoryInterface;
+use App\Contracts\UserStatisticsServiceInterface;
 use App\Repositories\GameLogRepository;
 use App\Repositories\UserStatisticsRepository;
+use App\Services\AuthService;
+use App\Services\GameLogService;
+use App\Services\UserStatisticsService;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -15,11 +21,15 @@ use Illuminate\Support\ServiceProvider;
  * Bertanggung jawab mendaftarkan semua binding interface → implementasi
  * ke dalam Laravel Service Container (IoC Container).
  *
- * Dengan pola ini, Controller hanya bergantung pada Interface (abstraksi),
- * bukan pada kelas konkret (implementasi). Ini mempermudah:
- *  - Unit testing (bisa diganti dengan mock/fake)
- *  - Penggantian implementasi di masa depan (misal: ganti ke API eksternal)
- *    tanpa perlu mengubah satu baris pun di Controller.
+ * Arsitektur yang didaftarkan:
+ *   Controller → Service Interface → Service → Repository Interface → Repository → Model
+ *
+ * Dengan pola ini:
+ *  - Controller hanya bergantung pada Service Interface (abstraksi)
+ *  - Service hanya bergantung pada Repository Interface (abstraksi)
+ *  - Mempermudah unit testing (bisa diganti dengan mock/fake)
+ *  - Penggantian implementasi di masa depan tidak memerlukan perubahan
+ *    pada lapisan di atasnya.
  */
 class GameLogServiceProvider extends ServiceProvider
 {
@@ -32,9 +42,11 @@ class GameLogServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // -------------------------------------------------------
+        // Repository Layer Bindings
+        // -------------------------------------------------------
+
         // Binding: GameLogRepositoryInterface → GameLogRepository
-        // Setiap kali Container diminta GameLogRepositoryInterface,
-        // ia akan mengembalikan instance GameLogRepository.
         $this->app->singleton(
             GameLogRepositoryInterface::class,
             GameLogRepository::class
@@ -44,6 +56,34 @@ class GameLogServiceProvider extends ServiceProvider
         $this->app->singleton(
             UserStatisticsRepositoryInterface::class,
             UserStatisticsRepository::class
+        );
+
+        // -------------------------------------------------------
+        // Service Layer Bindings
+        // -------------------------------------------------------
+
+        // Binding: GameLogServiceInterface → GameLogService
+        $this->app->singleton(
+            GameLogServiceInterface::class,
+            GameLogService::class
+        );
+
+        // Binding: AuthServiceInterface → AuthService
+        $this->app->singleton(
+            AuthServiceInterface::class,
+            AuthService::class
+        );
+
+        // Binding: UserStatisticsServiceInterface → UserStatisticsService
+        $this->app->singleton(
+            UserStatisticsServiceInterface::class,
+            UserStatisticsService::class
+        );
+
+        // Binding: RawgServiceInterface → RawgService
+        $this->app->singleton(
+            \App\Contracts\RawgServiceInterface::class,
+            \App\Services\RawgService::class
         );
     }
 
@@ -70,6 +110,9 @@ class GameLogServiceProvider extends ServiceProvider
         return [
             GameLogRepositoryInterface::class,
             UserStatisticsRepositoryInterface::class,
+            GameLogServiceInterface::class,
+            AuthServiceInterface::class,
+            UserStatisticsServiceInterface::class,
         ];
     }
 }

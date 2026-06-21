@@ -20,4 +20,5 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::delete('/gamelogs/{id}', [GameTrackerController::class, 'destroy']);
     
     Route::get('/user/statistics', [UserStatisticsController::class, 'getStatistics']);
+    Route::get('/games/search', [\App\Http\Controllers\Api\RawgController::class, 'searchGames']);
 });

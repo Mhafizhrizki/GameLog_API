@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Contracts\GameLogRepositoryInterface;
+use App\Contracts\GameLogServiceInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,15 +12,18 @@ use Illuminate\Http\Request;
  *
  * Menangani seluruh request HTTP untuk operasi CRUD GameLog.
  *
- * Controller ini tidak berinteraksi langsung dengan database.
- * Semua akses data didelegasikan ke GameLogRepositoryInterface,
+ * Controller ini tidak mengandung business logic.
+ * Semua logika bisnis (validasi duplikasi, kepemilikan entri,
+ * penentuan nilai default) didelegasikan ke GameLogServiceInterface,
  * yang disuntikkan (inject) oleh Laravel Service Container
  * secara otomatis melalui constructor.
+ *
+ * Alur: Controller → Service → Repository → Model
  */
 class GameTrackerController extends Controller
 {
     public function __construct(
-        private readonly GameLogRepositoryInterface $gameLogRepository
+        private readonly GameLogServiceInterface $gameLogService
     ) {}
 
     /**
@@ -31,7 +34,7 @@ class GameTrackerController extends Controller
     public function index(Request $request): JsonResponse
     {
         $status   = $request->query('status');
-        $gameLogs = $this->gameLogRepository->getAllForUser(
+        $gameLogs = $this->gameLogService->getAll(
             userId: $request->user()->id,
             status: $status
         );
@@ -56,21 +59,15 @@ class GameTrackerController extends Controller
             'personal_rating' => 'nullable|integer|min:0|max:5',
         ]);
 
-        // Cegah duplikasi: satu user tidak boleh menambah game yang sama dua kali
-        if ($this->gameLogRepository->existsForUser($request->user()->id, $validated['rawg_id'])) {
+        // Service mengembalikan null jika game sudah ada (duplikasi)
+        $gameLog = $this->gameLogService->add($request->user()->id, $validated);
+
+        if (! $gameLog) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Game already exists in your tracker',
             ], 409);
         }
-
-        $gameLog = $this->gameLogRepository->create([
-            'user_id'         => $request->user()->id,
-            'rawg_id'         => $validated['rawg_id'],
-            'title'           => $validated['title'],
-            'status'          => $validated['status'] ?? 'playing',
-            'personal_rating' => $validated['personal_rating'] ?? 0,
-        ]);
 
         return response()->json([
             'status'  => 'success',
@@ -93,25 +90,20 @@ class GameTrackerController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
-        // Repository sudah memastikan entri milik user ini
-        $gameLog = $this->gameLogRepository->findByIdAndUser($id, $request->user()->id);
-
-        if (! $gameLog) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'GameLog entry not found',
-            ], 404);
-        }
-
         $validated = $request->validate([
             'status'          => 'nullable|in:wishlist,playing,completed',
             'personal_rating' => 'nullable|integer|min:0|max:5',
         ]);
 
-        // Hanya kirim field yang benar-benar diisi (bukan null)
-        $dataToUpdate = array_filter($validated, fn ($value) => ! is_null($value));
+        // Service mengembalikan null jika entri tidak ditemukan atau bukan milik user
+        $updated = $this->gameLogService->update($request->user()->id, $id, $validated);
 
-        $updated = $this->gameLogRepository->update($gameLog, $dataToUpdate);
+        if (! $updated) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'GameLog entry not found',
+            ], 404);
+        }
 
         return response()->json([
             'status'  => 'success',
@@ -133,17 +125,15 @@ class GameTrackerController extends Controller
      */
     public function destroy(Request $request, int $id): JsonResponse
     {
-        // Repository sudah memastikan entri milik user ini
-        $gameLog = $this->gameLogRepository->findByIdAndUser($id, $request->user()->id);
+        // Service mengembalikan null jika entri tidak ditemukan atau bukan milik user
+        $result = $this->gameLogService->remove($request->user()->id, $id);
 
-        if (! $gameLog) {
+        if (is_null($result)) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'GameLog entry not found or unauthorized action',
             ], 404);
         }
-
-        $this->gameLogRepository->delete($gameLog);
 
         return response()->json([
             'status'  => 'success',

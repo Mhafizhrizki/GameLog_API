@@ -2,15 +2,34 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\AuthServiceInterface;
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
+/**
+ * Class AuthController
+ *
+ * Menangani seluruh request HTTP untuk autentikasi pengguna.
+ *
+ * Controller ini tidak mengandung business logic autentikasi.
+ * Semua logika (hashing password, verifikasi credentials, pembuatan token)
+ * didelegasikan ke AuthServiceInterface, yang disuntikkan oleh
+ * Laravel Service Container secara otomatis melalui constructor.
+ *
+ * Alur: Controller → Service → Model
+ */
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    public function __construct(
+        private readonly AuthServiceInterface $authService
+    ) {}
+
+    /**
+     * POST /api/v1/register
+     * Daftarkan user baru dan kembalikan token akses.
+     */
+    public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'name'     => 'required|string|max:255',
@@ -18,64 +37,65 @@ class AuthController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ]);
-
-        $token = $user->createToken('api-token')->plainTextToken;
+        $result = $this->authService->register($validated);
 
         return response()->json([
             'status'  => 'success',
             'message' => 'User registered successfully',
             'data'    => [
                 'user'  => [
-                    'id'         => $user->id,
-                    'name'       => $user->name,
-                    'email'      => $user->email,
-                    'created_at' => $user->created_at,
+                    'id'         => $result['user']->id,
+                    'name'       => $result['user']->name,
+                    'email'      => $result['user']->email,
+                    'created_at' => $result['user']->created_at,
                 ],
-                'token' => $token,
+                'token' => $result['token'],
             ],
         ], 201);
     }
 
-    public function login(Request $request)
+    /**
+     * POST /api/v1/login
+     * Verifikasi credentials dan kembalikan token akses.
+     */
+    public function login(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'email'    => 'required|email',
             'password' => 'required',
         ]);
 
-        $user = User::where('email', $validated['email'])->first();
+        // Service mengembalikan null jika credentials tidak valid
+        $result = $this->authService->login($validated);
 
-        if (! $user || ! Hash::check($validated['password'], $user->password)) {
+        if (! $result) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Invalid credentials. Email or password is wrong.',
             ], 401);
         }
 
-        $token = $user->createToken('api-token')->plainTextToken;
-
         return response()->json([
             'status'  => 'success',
             'message' => 'Login successful',
             'data'    => [
                 'user'  => [
-                    'id'    => $user->id,
-                    'name'  => $user->name,
-                    'email' => $user->email,
+                    'id'    => $result['user']->id,
+                    'name'  => $result['user']->name,
+                    'email' => $result['user']->email,
                 ],
-                'token' => $token,
+                'token' => $result['token'],
             ],
         ], 200);
     }
 
-    public function logout(Request $request)
+    /**
+     * POST /api/v1/logout
+     * Hapus token akses aktif (logout dari device saat ini).
+     */
+    public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $this->authService->logout($request->user());
 
         return response()->json([
             'status'  => 'success',

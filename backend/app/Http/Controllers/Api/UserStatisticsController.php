@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Contracts\UserStatisticsRepositoryInterface;
+use App\Contracts\UserStatisticsServiceInterface;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,14 +13,16 @@ use Illuminate\Http\Request;
  * Menangani request untuk mengambil statistik aktivitas
  * game dari pengguna yang sedang login.
  *
- * Semua logika query database didelegasikan ke
- * UserStatisticsRepositoryInterface yang disuntikkan
- * oleh Laravel Service Container melalui constructor.
+ * Semua logika pengambilan dan perhitungan statistik didelegasikan ke
+ * UserStatisticsServiceInterface yang disuntikkan oleh Laravel Service Container
+ * melalui constructor.
+ *
+ * Alur: Controller → Service → Repository → Model
  */
 class UserStatisticsController extends Controller
 {
     public function __construct(
-        private readonly UserStatisticsRepositoryInterface $statisticsRepository
+        private readonly UserStatisticsServiceInterface $statisticsService
     ) {}
 
     /**
@@ -29,7 +31,7 @@ class UserStatisticsController extends Controller
      */
     public function getStatistics(Request $request): JsonResponse
     {
-        $statistics = $this->statisticsRepository->getStatistics(
+        $statistics = $this->statisticsService->getStatistics(
             userId: $request->user()->id
         );
 
