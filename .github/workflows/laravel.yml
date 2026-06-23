@@ -24,7 +24,7 @@ jobs:
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '8.0' # Sesuaikan dengan versi PHP projek Anda
+        php-version: '8.3' # Sesuaikan dengan versi PHP projek Anda
         extensions: mbstring, xml, ctype, iconv, intl, pdo, bcmath, zip
 
     # 3. Duplikat file .env di dalam folder backend
