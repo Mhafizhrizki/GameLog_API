@@ -1,19 +1,52 @@
+name: Laravel
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
 jobs:
-  build:
+  laravel-tests:
     runs-on: ubuntu-latest
 
     steps:
-      # Mengunduh kode dari repositori GitHub ke server runner
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    # 1. Selalu unduh kode repositori paling pertama
+    - name: Checkout Repository
+      uses: actions/checkout@v4
 
-      # Menyiapkan lingkungan PHP di server runner
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.0' # <-- Ganti ini jika versi PHP Anda bukan 8.2
-          extensions: mbstring, xml, ctype, iconv, intl, pdo, bcmath, zip
+    # 2. Siapkan lingkungan PHP dan ekstensinya
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.0' # Sesuaikan dengan versi PHP projek Anda (misal: '8.1', '8.2')
+        extensions: mbstring, xml, ctype, iconv, intl, pdo, bcmath, zip
 
-      # Menginstal package PHP berdasarkan composer.json yang sudah di-checkout
-      - name: Install Dependencies
-        run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+    # 3. Siapkan file environment (.env)
+    - name: Copy .env
+      run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+
+    # 4. Instal dependencies via Composer (Sekarang pasti aman karena file sudah di-checkout)
+    - name: Install Dependencies
+      run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+    # 5. Generate Application Key Laravel
+    - name: Generate key
+      run: php artisan key:generate
+
+    # 6. Atur hak akses folder storage & cache
+    - name: Directory Permissions
+      run: chmod -R 777 storage bootstrap/cache
+
+    # 7. Buat database SQLite untuk keperluan testing
+    - name: Create Database
+      run: |
+        mkdir -p database
+        touch database/database.sqlite
+
+    # 8. Jalankan pengujian (Automated Testing)
+    - name: Execute tests (Unit and Feature tests) via PHPUnit/Pest
+      env:
+        DB_CONNECTION: sqlite
+        DB_DATABASE: database/database.sqlite
+      run: php artisan test
