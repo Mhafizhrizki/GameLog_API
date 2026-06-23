@@ -10,41 +10,46 @@ jobs:
   laravel-tests:
     runs-on: ubuntu-latest
 
+    # Trik ini memaksa semua perintah di bawah dijalankan di dalam folder backend
+    defaults:
+      run:
+        working-directory: ./backend
+
     steps:
-    # 1. Selalu unduh kode repositori paling pertama
+    # 1. Unduh kode dari repositori GitHub
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    # 2. Siapkan lingkungan PHP dan ekstensinya
+    # 2. Siapkan lingkungan PHP
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '8.0' # Sesuaikan dengan versi PHP projek Anda (misal: '8.1', '8.2')
+        php-version: '8.0' # Sesuaikan dengan versi PHP projek Anda
         extensions: mbstring, xml, ctype, iconv, intl, pdo, bcmath, zip
 
-    # 3. Siapkan file environment (.env)
+    # 3. Duplikat file .env di dalam folder backend
     - name: Copy .env
       run: php -r "file_exists('.env') || copy('.env.example', '.env');"
 
-    # 4. Instal dependencies via Composer (Sekarang pasti aman karena file sudah di-checkout)
+    # 4. Jalankan Composer Install di dalam folder backend
     - name: Install Dependencies
       run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
-    # 5. Generate Application Key Laravel
+    # 5. Generate Application Key
     - name: Generate key
       run: php artisan key:generate
 
-    # 6. Atur hak akses folder storage & cache
+    # 6. Atur hak akses folder storage & cache backend
     - name: Directory Permissions
       run: chmod -R 777 storage bootstrap/cache
 
-    # 7. Buat database SQLite untuk keperluan testing
+    # 7. Buat database SQLite untuk testing
     - name: Create Database
       run: |
         mkdir -p database
         touch database/database.sqlite
 
-    # 8. Jalankan pengujian (Automated Testing)
+    # 8. Jalankan test
     - name: Execute tests (Unit and Feature tests) via PHPUnit/Pest
       env:
         DB_CONNECTION: sqlite
