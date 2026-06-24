@@ -1,0 +1,17 @@
+backend/vendor
+backend/node_modules
+backend/public/hot
+backend/public/storage
+backend/storage/*.key
+backend/storage/logs/*.log
+backend/tests
+backend/.env
+backend/.env.backup
+backend/.phpunit.result.cache
+frontend/
+Agents.md
+Design.md
+PRD.md
+PRD_FRONTEND.md
+PRD_Frontend_GameLog.md
+docker-compose.yml
