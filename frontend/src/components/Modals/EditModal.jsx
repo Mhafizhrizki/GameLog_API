@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 const EditModal = ({ gameLog, onClose, onSave }) => {
   const [status, setStatus] = useState('playing');
@@ -24,11 +25,11 @@ const EditModal = ({ gameLog, onClose, onSave }) => {
     setIsSaving(false);
   };
 
-  return (
+  const modalContent = (
     <div style={{
       position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
       backgroundColor: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(4px)',
-      display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100,
+      display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999,
       padding: '1rem'
     }}>
       <div className="glass-card animate-fade-in" style={{
@@ -87,6 +88,8 @@ const EditModal = ({ gameLog, onClose, onSave }) => {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default EditModal;

@@ -48,9 +48,9 @@ const StatisticsPage = () => {
         gap: '1.5rem'
       }}>
         <StatCard title="Total Games" value={stats.total_games} color="var(--text-primary)" />
-        <StatCard title="Playing" value={stats.playing_count} color="var(--accent-secondary)" />
-        <StatCard title="Completed" value={stats.completed_count} color="var(--success)" />
-        <StatCard title="Wishlist" value={stats.wishlist_count} color="var(--text-secondary)" />
+        <StatCard title="Playing" value={stats.total_playing} color="var(--accent-secondary)" />
+        <StatCard title="Completed" value={stats.total_completed} color="var(--success)" />
+        <StatCard title="Wishlist" value={stats.total_wishlist} color="var(--text-secondary)" />
         <StatCard 
           title="Average Rating" 
           value={stats.average_rating ? Number(stats.average_rating).toFixed(1) : '0'} 
