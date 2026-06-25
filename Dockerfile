@@ -12,7 +12,10 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Aktifkan mod_rewrite Apache untuk routing Laravel
-RUN a2enmod rewrite
+# SEKALIGUS: Matikan mpm_event/worker dan aktifkan mpm_prefork (Fix untuk Railway)
+RUN a2enmod rewrite \
+    && a2dismod mpm_event mpm_worker \
+    && a2enmod mpm_prefork
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -37,7 +40,7 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Mengubah port Apache agar mendengarkan environment $PORT dari Render
+# Mengubah port Apache agar mendengarkan environment $PORT dari Railway/Render
 RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 
 # Salin script start.sh dari root ke dalam container
