@@ -10,6 +10,13 @@
 
 **Repositori:** `https://github.com/Mhafizhrizki/GameLog_API`
 
+**link web : ** https://frontend-production-66185.up.railway.app/
+
+**akun web:**
+Admin: admin@admin.com / admin123 
+User: user1@user.com / user1234
+
+
 ---
 
 ## Anggota & Role
