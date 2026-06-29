@@ -12,10 +12,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Aktifkan mod_rewrite Apache untuk routing Laravel
-# SEKALIGUS: Matikan mpm_event/worker dan aktifkan mpm_prefork (Fix untuk Railway)
-RUN a2enmod rewrite \
-    && a2dismod mpm_event mpm_worker \
-    && a2enmod mpm_prefork
+RUN a2enmod rewrite
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
