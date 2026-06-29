@@ -17,5 +17,9 @@ touch "$DB_PATH"
 # Jalankan migrasi database secara paksa di environment production
 php artisan migrate --force
 
+# Matikan MPM event/worker dan pastikan mpm_prefork aktif (Fix khusus Railway)
+a2dismod mpm_event mpm_worker || true
+a2enmod mpm_prefork || true
+
 # Mulai server Apache di background (foreground agar container tidak mati)
 apache2-foreground
