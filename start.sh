@@ -14,6 +14,10 @@ mkdir -p $(dirname "$DB_PATH")
 # Buat file database.sqlite jika belum ada
 touch "$DB_PATH"
 
+# Berikan hak akses kepada www-data (Apache) agar bisa membaca & menulis database
+chown -R www-data:www-data $(dirname "$DB_PATH")
+chmod -R 775 $(dirname "$DB_PATH")
+
 # Jalankan migrasi database secara paksa di environment production
 php artisan migrate --force
 
