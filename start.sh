@@ -21,6 +21,9 @@ chmod -R 775 $(dirname "$DB_PATH")
 # Jalankan migrasi database secara paksa di environment production
 php artisan migrate --force
 
+# Jalankan seeder agar akun admin dan user selalu tersedia
+php artisan db:seed --force
+
 # Matikan MPM event/worker dan pastikan mpm_prefork aktif (Fix khusus Railway)
 a2dismod mpm_event mpm_worker || true
 a2enmod mpm_prefork || true
