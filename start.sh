@@ -5,8 +5,14 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Buat file database.sqlite jika belum ada agar migrasi tidak error
-touch database/database.sqlite
+# Ambil path DB_DATABASE dari env (default ke database/database.sqlite)
+DB_PATH=${DB_DATABASE:-database/database.sqlite}
+
+# Pastikan folder tempat database berada tersedia
+mkdir -p $(dirname "$DB_PATH")
+
+# Buat file database.sqlite jika belum ada
+touch "$DB_PATH"
 
 # Jalankan migrasi database secara paksa di environment production
 php artisan migrate --force
